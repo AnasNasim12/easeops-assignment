@@ -1,157 +1,325 @@
-# EaseOps E-Library User Backend
+# API Testing Guide
 
-## Quick Start
+This guide provides comprehensive testing instructions for the EaseOps E-Library User Backend API.
 
-1. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Prerequisites
 
-2. **Setup Database**
-   - Install PostgreSQL
-   - Create database: `easeops_elibrary`
-   - Update `config.py` with your database URL
+1. PostgreSQL database running
+2. Python environment with dependencies installed
+3. Sample data created (run `python create_sample_data.py`)
 
-3. **Create Sample Data**
-   ```bash
-   python create_sample_data.py
-   ```
+## Testing Tools
 
-4. **Run the Application**
-   ```bash
-   uvicorn main:app --reload
-   ```
+### Option 1: FastAPI Interactive Docs
+- Start the server: `uvicorn main:app --reload`
+- Visit: `http://localhost:8000/docs`
+- Interactive API documentation with "Try it out" functionality
 
-5. **Test the API**
-   - Visit: `http://localhost:8000/docs`
-   - Or use the testing guide: `API_TESTING_GUIDE.md`
+### Option 2: Postman Collection
+Import the following collection for comprehensive testing:
 
-## Default Users (from sample data)
-- **johndoe** / password123
-- **janesmith** / password123  
-- **admin** / admin123
-
-## Key Features Implemented
-
-✅ **Authentication & Profile**
-- JWT-based user registration and login
-- User profile management with preferences
-- Dark mode and notification settings
-
-✅ **Library Access**
-- Browse eBooks by category, tags, or search
-- View book details and content
-- Featured and popular books
-
-✅ **Bookmarks & Notes**
-- Add/remove bookmarks
-- Create and manage reading notes
-- View bookmarked books
-
-✅ **User Interactions**
-- Submit feedback and contact requests
-- Participate in surveys
-- Access FAQs and social sharing
-
-✅ **Notifications**
-- Email notifications for new releases
-- WhatsApp notifications (optional)
-- Notification preferences management
-
-## API Endpoints
-
-- **Authentication**: `/api/auth/*`
-- **Users**: `/api/users/*`
-- **Library**: `/api/library/*`
-- **Bookmarks**: `/api/bookmarks/*`
-- **Interactions**: `/api/interactions/*`
-- **Notifications**: `/api/notifications/*`
-
-## Technology Stack
-
-- **FastAPI** - Modern Python web framework
-- **PostgreSQL** - Relational database
-- **SQLAlchemy** - ORM for database operations
-- **JWT** - Authentication tokens
-- **Pydantic** - Data validation
-- **Uvicorn** - ASGI server
-
-## Project Structure
-
-```
-├── main.py                 # FastAPI app entry point
-├── config.py              # Configuration settings
-├── database.py            # Database connection
-├── models.py              # SQLAlchemy models
-├── schemas.py             # Pydantic schemas
-├── auth_utils.py          # Authentication utilities
-├── routers/               # API route modules
-│   ├── auth.py           # Authentication routes
-│   ├── users.py         # User management routes
-│   ├── library.py       # Library access routes
-│   ├── bookmarks.py     # Bookmarks & notes routes
-│   ├── interactions.py  # User interaction routes
-│   └── notifications.py # Notification routes
-├── create_sample_data.py  # Sample data creation
-├── requirements.txt       # Python dependencies
-└── README.md             # This file
+```json
+{
+  "info": {
+    "name": "EaseOps E-Library API",
+    "description": "Complete API testing collection"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"username\": \"testuser\",\n  \"full_name\": \"Test User\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "http://localhost:8000/api/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "http://localhost:8000/api/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "http://localhost:8000/api/auth/me"
+          }
+        }
+      ]
+    }
+  ]
+}
 ```
 
-## Configuration
+### Option 3: cURL Commands
 
-Create a `.env` file with:
+#### 1. User Registration
+```bash
+curl -X POST "http://localhost:8000/api/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "username": "testuser",
+    "full_name": "Test User",
+    "password": "password123"
+  }'
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/easeops_elibrary
-SECRET_KEY=your-secret-key-here
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-WHATSAPP_API_URL=your-whatsapp-api-url
-WHATSAPP_API_TOKEN=your-whatsapp-token
+
+#### 2. User Login
+```bash
+curl -X POST "http://localhost:8000/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123"
+  }'
 ```
 
-## Testing
+#### 3. Get Books (No Auth Required)
+```bash
+curl -X GET "http://localhost:8000/api/library/books"
+```
 
-- **Interactive Docs**: `http://localhost:8000/docs`
-- **Testing Guide**: See `API_TESTING_GUIDE.md`
-- **Sample Data**: Run `python create_sample_data.py`
+#### 4. Get Books with Filtering
+```bash
+curl -X GET "http://localhost:8000/api/library/books?category=Fiction&search=gatsby"
+```
 
-## Features for Internship Assignment
+#### 5. Add Bookmark (Requires Auth)
+```bash
+curl -X POST "http://localhost:8000/api/bookmarks/1" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
-This implementation covers all required features:
+#### 6. Create Note
+```bash
+curl -X POST "http://localhost:8000/api/bookmarks/notes" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "book_id": 1,
+    "page_number": 10,
+    "note_text": "This is an interesting chapter about Gatsby"
+  }'
+```
 
-1. **Authentication & Profile** ✅
-   - User registration and login (JWT-based)
-   - Manage user profiles and preferences (dark mode, bookmarks)
+#### 7. Submit Feedback
+```bash
+curl -X POST "http://localhost:8000/api/interactions/feedback" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "feedback_type": "feature_request",
+    "subject": "Dark Mode Enhancement",
+    "message": "Please add more customization options for dark mode"
+  }'
+```
 
-2. **Library Access** ✅
-   - Fetch and display eBook list by category, tags, or search query
-   - View eBook details and content (with online/offline mode support)
-   - Add/remove bookmarks and notes
+## Test Scenarios
 
-3. **User Interactions** ✅
-   - Submit feedback, contact requests, and surveys
-   - Access FAQs and chatbot
-   - Social sharing of eBooks
+### Authentication Flow
+1. Register a new user
+2. Login with credentials
+3. Use the JWT token for authenticated requests
+4. Test token expiration
 
-4. **Notifications** ✅
-   - Receive email or WhatsApp updates about new releases
+### Library Access
+1. Browse all books
+2. Filter by category
+3. Search by title/author
+4. Get book details
+5. Test pagination
 
-## Token Validation & Response Consistency
+### User Preferences
+1. Update user profile
+2. Toggle dark mode
+3. Change notification preferences
+4. Verify changes persist
 
-- All authenticated endpoints properly validate JWT tokens
-- Consistent error responses across all endpoints
-- Proper HTTP status codes
-- Comprehensive API documentation
+### Bookmarks & Notes
+1. Add bookmarks
+2. Remove bookmarks
+3. Create notes for books
+4. Update notes
+5. Delete notes
+6. View all bookmarks
 
-## Next Steps
+### User Interactions
+1. Submit feedback
+2. Submit contact request
+3. View active surveys
+4. Respond to survey
+5. Access FAQs
+6. Share books
 
-1. Deploy to production server
-2. Set up proper email/WhatsApp services
-3. Add more comprehensive error handling
-4. Implement rate limiting
-5. Add API versioning
-6. Set up monitoring and logging
+### Notifications
+1. Subscribe to new releases
+2. Send test notifications
+3. View notification history
+4. Mark notifications as read
 
----
+## Error Testing
 
-**Note**: This is a simplified implementation suitable for an internship assignment. For production use, additional security measures, error handling, and performance optimizations would be required.
+### Invalid Credentials
+```bash
+curl -X POST "http://localhost:8000/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "wronguser",
+    "password": "wrongpass"
+  }'
+```
+
+### Unauthorized Access
+```bash
+curl -X GET "http://localhost:8000/api/users/profile"
+```
+
+### Invalid Book ID
+```bash
+curl -X GET "http://localhost:8000/api/library/books/99999"
+```
+
+## Performance Testing
+
+### Load Testing with Apache Bench
+```bash
+# Test book listing endpoint
+ab -n 100 -c 10 http://localhost:8000/api/library/books
+
+# Test with authentication
+ab -n 50 -c 5 -H "Authorization: Bearer YOUR_JWT_TOKEN" http://localhost:8000/api/users/profile
+```
+
+## Database Testing
+
+### Check Sample Data
+```sql
+-- Connect to PostgreSQL and run:
+SELECT COUNT(*) FROM users;
+SELECT COUNT(*) FROM books;
+SELECT COUNT(*) FROM surveys;
+
+-- Check user preferences
+SELECT username, dark_mode, email_notifications FROM users;
+
+-- Check book categories
+SELECT DISTINCT category FROM books;
+```
+
+## Automated Testing
+
+### Run Unit Tests
+```bash
+pytest tests/ -v
+```
+
+### Test Coverage
+```bash
+pytest --cov=. tests/
+```
+
+## Common Issues & Solutions
+
+### 1. Database Connection Error
+- Ensure PostgreSQL is running
+- Check DATABASE_URL in config.py
+- Verify database exists
+
+### 2. JWT Token Issues
+- Check SECRET_KEY in config.py
+- Verify token format: `Bearer <token>`
+- Check token expiration
+
+### 3. Email Notification Failures
+- Configure SMTP settings in .env
+- Use app-specific passwords for Gmail
+- Check firewall settings
+
+### 4. Import Errors
+- Ensure all dependencies are installed
+- Check Python path
+- Verify __init__.py files exist
+
+## Sample Test Data
+
+The `create_sample_data.py` script creates:
+- 3 sample users (johndoe, janesmith, admin)
+- 8 sample books across different categories
+- 1 sample survey
+- All users have password: "password123"
+
+## API Response Examples
+
+### Successful Login Response
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer"
+}
+```
+
+### Book List Response
+```json
+[
+  {
+    "id": 1,
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "description": "A classic American novel set in the Jazz Age.",
+    "category": "Fiction",
+    "tags": ["classic", "american", "literature"],
+    "isbn": "9780743273565",
+    "language": "English",
+    "page_count": 180,
+    "is_available": true,
+    "created_at": "2024-01-01T00:00:00"
+  }
+]
+```
+
+### Error Response
+```json
+{
+  "detail": "Book not found"
+}
+```
+
+## Security Testing
+
+### SQL Injection
+Test with malicious input:
+```bash
+curl -X GET "http://localhost:8000/api/library/books?search='; DROP TABLE books; --"
+```
+
+### XSS Prevention
+Test with script tags:
+```bash
+curl -X POST "http://localhost:8000/api/interactions/feedback" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "feedback_type": "general",
+    "subject": "<script>alert(\"XSS\")</script>",
+    "message": "Test message"
+  }'
+```
+
+This comprehensive testing guide ensures all API endpoints are thoroughly tested and validated.
+
